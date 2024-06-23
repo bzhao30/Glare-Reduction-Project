@@ -43,7 +43,7 @@ while True:
         center_y = y + h // 2
         formatted_x = f"{center_x:03d}"  # Format as three digits
         formatted_y = f"{center_y:03d}"  # Format as three digits
-        print(f"({formatted_x}, {formatted_y})")
+        print(f"{formatted_x}.{formatted_y}")
 
     # Display the resulting frame
     cv2.imshow('Face Detection', frame)
