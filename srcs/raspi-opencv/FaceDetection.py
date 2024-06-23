@@ -1,7 +1,7 @@
 import cv2
 import os
 from picamera2 import Picamera2, Preview
-# Shows the persons face
+# KEY ACKNOWLEDGEMENT: USED CHATGPT TO GET STARTED WITH OPENCV
 # Define the path to the Haar cascade file
 cascade_path = '/home/brad/opencv/data/haarcascades/haarcascade_frontalface_default.xml'
 
@@ -41,7 +41,9 @@ while True:
         cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 255), 5)
         center_x = x + w // 2
         center_y = y + h // 2
-        print(f"({center_x}, {center_y})")
+        formatted_x = f"{center_x:03d}"  # Format as three digits
+        formatted_y = f"{center_y:03d}"  # Format as three digits
+        print(f"({formatted_x}, {formatted_y})")
 
     # Display the resulting frame
     cv2.imshow('Face Detection', frame)
