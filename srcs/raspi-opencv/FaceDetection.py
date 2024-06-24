@@ -1,7 +1,8 @@
 import cv2
 import os
 from picamera2 import Picamera2, Preview
-# KEY ACKNOWLEDGEMENT: USED CHATGPT TO GET STARTED WITH OPENCV
+import time
+# I would like to acknowledge the help of chatGPT for the computer vision code, as this is a topic I am unfamiliar with. 
 # Define the path to the Haar cascade file
 cascade_path = '/home/brad/opencv/data/haarcascades/haarcascade_frontalface_default.xml'
 
@@ -21,6 +22,10 @@ camera_config = picam2.create_preview_configuration(main={"size": (1080, 1080)})
 
 picam2.configure(camera_config)
 picam2.start()
+
+# Initialize a counter
+frame_counter = 0
+print_interval = 4  # Print every 4 frames
 
 while True:
     # Capture frame-by-frame
@@ -43,7 +48,13 @@ while True:
         center_y = y + h // 2
         formatted_x = f"{center_x:03d}"  # Format as three digits
         formatted_y = f"{center_y:03d}"  # Format as three digits
-        print(f"{formatted_x}.{formatted_y}")
+
+        # Print the coordinates at the specified interval
+        if frame_counter % print_interval == 0:
+            print(f"{formatted_x}.{formatted_y}")
+
+    # Increment the counter
+    frame_counter += 1
 
     # Display the resulting frame
     cv2.imshow('Face Detection', frame)
