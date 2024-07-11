@@ -174,7 +174,24 @@ architecture Behavioral of StereoCam is
    signal rez_320x240 : std_logic;
    signal size_select: std_logic_vector(1 downto 0);
    signal rd_addr_l,wr_addr_l,rd_addr_r,wr_addr_r  : std_logic_vector(16 downto 0);
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
 begin
+
    vga_r <= red(7 downto 4);
    vga_g <= green(7 downto 4);
    vga_b <= blue(7 downto 4);
@@ -277,8 +294,6 @@ begin
 	
 	Inst_ov7670_capture_l: ov7670_capture PORT MAP(
 		pclk  => ov7670_pclk_l,
---      rez_160x120 => rez_160x120,
---      rez_320x240 => rez_320x240,
 		vsync => ov7670_vsync_l,
 		href  => ov7670_href_l,
 		d     => ov7670_data_l,
@@ -289,8 +304,6 @@ begin
 	
 	Inst_ov7670_capture_r: ov7670_capture PORT MAP(
 		pclk  => ov7670_pclk_r,
---      rez_160x120 => rez_160x120,
---      rez_320x240 => rez_320x240,
 		vsync => ov7670_vsync_r,
 		href  => ov7670_href_r,
 		d     => ov7670_data_r,
@@ -310,18 +323,14 @@ begin
 
 	Inst_Address_Generator_l: Address_Generator PORT MAP(
 		CLK25 => clk_vga,
---      rez_160x120 => rez_160x120,
---      rez_320x240 => rez_320x240,
 		enable => activeArea,
-      vsync  => vsync,
+        vsync  => vsync,
 		address => rdaddress_l
 	);
 Inst_Address_Generator_r: Address_Generator PORT MAP(
 		CLK25 => clk_vga,
---      rez_160x120 => rez_160x120,
---      rez_320x240 => rez_320x240,
 		enable => activeArea,
-      vsync  => vsync,
+        vsync  => vsync,
 		address => rdaddress_r
 	);
 end Behavioral;

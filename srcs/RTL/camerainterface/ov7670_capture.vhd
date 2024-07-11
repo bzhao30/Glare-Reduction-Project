@@ -16,8 +16,6 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity ov7670_capture is
     Port ( pclk  : in   STD_LOGIC;
---           rez_160x120 : IN std_logic;
---           rez_320x240 : IN std_logic;
            vsync : in   STD_LOGIC;
            href  : in   STD_LOGIC;
            d     : in   STD_LOGIC_VECTOR (7 downto 0);
