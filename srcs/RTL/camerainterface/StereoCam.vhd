@@ -49,8 +49,6 @@ architecture Behavioral of StereoCam is
 	COMPONENT VGA
 	PORT(
 		CLK25 : IN std_logic;    
-      rez_160x120 : IN std_logic;
-      rez_320x240 : IN std_logic;
 		Hsync : OUT std_logic;
 		Vsync : OUT std_logic;
 		Nblank : OUT std_logic;      
@@ -86,33 +84,31 @@ architecture Behavioral of StereoCam is
   PORT (
       clka : IN STD_LOGIC;
       wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-      addra : IN STD_LOGIC_VECTOR(16 DOWNTO 0);
-      dina : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
+      addra : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
+      dina : IN STD_LOGIC_VECTOR(2 DOWNTO 0);
       clkb : IN STD_LOGIC;
       enb : IN STD_LOGIC;
-      addrb : IN STD_LOGIC_VECTOR(16 DOWNTO 0);
-      doutb : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
+      addrb : IN STD_LOGIC_VECTOR(9 DOWNTO 0);
+      doutb : OUT STD_LOGIC_VECTOR(2 DOWNTO 0)
     );
 	END COMPONENT;
 
 	COMPONENT ov7670_capture
 	PORT(
---      rez_160x120 : IN std_logic;
---      rez_320x240 : IN std_logic;
 		pclk : IN std_logic;
 		vsync : IN std_logic;
 		href : IN std_logic;
 		d : IN std_logic_vector(7 downto 0);          
-		addr : OUT std_logic_vector(16 downto 0);
-		dout : OUT std_logic_vector(11 downto 0);
+		addr : OUT std_logic_vector(9 downto 0);
+		dout : OUT std_logic_vector(2 downto 0);
 		we : OUT std_logic
 		);
 	END COMPONENT;
 
 	COMPONENT RGB
 	PORT(
-		Din_l : IN std_logic_vector(3 downto 0);
-		Din_r : IN std_logic_vector(3 downto 0);
+		Din_l : IN std_logic_vector(2 downto 0);
+		Din_r : IN std_logic_vector(2 downto 0);
 		Nblank : IN std_logic;          
 		R : OUT std_logic_vector(7 downto 0);
 		G : OUT std_logic_vector(7 downto 0);
@@ -127,23 +123,13 @@ architecture Behavioral of StereoCam is
     CLK_50          : out    std_logic;
     CLK_25          : out    std_logic);
 	end component;
-	
-	COMPONENT vga_pll
-	PORT(
-		inclk0 : IN std_logic;          
-		c0 : OUT std_logic;
-		c1 : OUT std_logic
-		);
-	END COMPONENT;
 
 	COMPONENT Address_Generator
 	PORT(
 		CLK25       : IN  std_logic;
---      rez_160x120 : IN std_logic;
---      rez_320x240 : IN std_logic;
 		enable      : IN  std_logic;       
       vsync       : in  STD_LOGIC;
-		address     : OUT std_logic_vector(16 downto 0)
+		address     : OUT std_logic_vector(9 downto 0)
 		);
 	END COMPONENT;
 
@@ -153,30 +139,24 @@ architecture Behavioral of StereoCam is
    signal clk_vga    : std_logic;
    signal wren_l,wren_r       : std_logic_vector(0 downto 0);
    signal resend     : std_logic;
-   signal nBlank     : std_logic;
+   signal nBlank     : std_logic := '0';
    signal vSync      : std_logic;
    signal nSync      : std_logic;
    
-   signal wraddress_l  : std_logic_vector(16 downto 0);
-   signal wrdata_l     : std_logic_vector(11 downto 0);
-   signal wraddress_r  : std_logic_vector(16 downto 0);
-   signal wrdata_r     : std_logic_vector(11 downto 0);
+   signal wraddress_l  : std_logic_vector(9 downto 0);
+   signal wrdata_l     : std_logic_vector(2 downto 0);
+   signal wraddress_r  : std_logic_vector(9 downto 0);
+   signal wrdata_r     : std_logic_vector(2 downto 0);
    
-   signal rdaddress_l  : std_logic_vector(16 downto 0);
-   signal rddata_l     : std_logic_vector(3 downto 0);
-   signal rdaddress_r  : std_logic_vector(16 downto 0);
-   signal rddata_r     : std_logic_vector(3 downto 0);
+   signal rdaddress_l  : std_logic_vector(9 downto 0);
+   signal rddata_l     : std_logic_vector(2 downto 0);
+   signal rdaddress_r  : std_logic_vector(9 downto 0);
+   signal rddata_r     : std_logic_vector(2 downto 0);
    
    signal red,green,blue : std_logic_vector(7 downto 0);
    signal activeArea : std_logic;
-   
-   signal rez_160x120 : std_logic;
-   signal rez_320x240 : std_logic;
    signal size_select: std_logic_vector(1 downto 0);
-   signal rd_addr_l,wr_addr_l,rd_addr_r,wr_addr_r  : std_logic_vector(16 downto 0);
-   
-   
-   
+   signal rd_addr_l,wr_addr_l,rd_addr_r,wr_addr_r  : std_logic_vector(9 downto 0);
    
    
    
@@ -196,9 +176,8 @@ begin
    vga_g <= green(7 downto 4);
    vga_b <= blue(7 downto 4);
    
-   rez_160x120 <= '0';
-   rez_320x240 <= '1';--btnr;
- your_instance_name : clocking
+
+ clkgen : clocking
      port map
       (-- Clock in ports
        CLK_100 => CLK100,
@@ -210,8 +189,6 @@ begin
    
 	Inst_VGA: VGA PORT MAP(
 		CLK25      => clk_vga,
-      rez_160x120 => rez_160x120,
-      rez_320x240 => rez_320x240,
 		clkout     => open,
 		Hsync      => vga_hsync,
 		Vsync      => vsync,
@@ -251,22 +228,22 @@ begin
 	
     --with size_select select 
     rd_addr_l <= --rdaddress_l(18 downto 2) when "00",
-        rdaddress_l(16 downto 0);-- when "01",
+        rdaddress_l(9 downto 0);-- when "01",
 --        rdaddress_l(16 downto 0) when "10",
 --        rdaddress_l(16 downto 0) when "11";
 --    with size_select select
     rd_addr_r <= --rdaddress_r(18 downto 2) when "00",
-        rdaddress_r(16 downto 0);-- when "01",
+        rdaddress_r(9 downto 0);-- when "01",
 --        rdaddress_r(16 downto 0) when "10",
 --        rdaddress_r(16 downto 0) when "11";
   -- with size_select select 
     wr_addr_r <= --wraddress_r(18 downto 2) when "00",
-            wraddress_r(16 downto 0);-- when "01",
+            wraddress_r(9 downto 0);-- when "01",
 --            wraddress_r(16 downto 0) when "10",
 --            wraddress_r(16 downto 0) when "11";
    --with size_select select 
     wr_addr_l <= --wraddress_l(18 downto 2) when "00",
-            wraddress_l(16 downto 0);-- when "01",
+            wraddress_l(9 downto 0);-- when "01",
 --            wraddress_l(16 downto 0) when "10",
 --            wraddress_l(16 downto 0) when "11";
             
@@ -277,7 +254,7 @@ begin
 		enb    =>'1',
 		clka   => ov7670_pclk_l,
 		addra => wr_addr_l,
-		dina      => wrdata_l(7 downto 4),
+		dina      => wrdata_l,
 		wea      => wren_l
 	);
 	
@@ -288,7 +265,7 @@ begin
 		enb    =>'1',
 		clka   => ov7670_pclk_r,
 		addra => wr_addr_r,
-		dina      => wrdata_r(7 downto 4),
+		dina      => wrdata_r,
 		wea      => wren_r
 	);
 	
@@ -327,7 +304,7 @@ begin
         vsync  => vsync,
 		address => rdaddress_l
 	);
-Inst_Address_Generator_r: Address_Generator PORT MAP(
+    Inst_Address_Generator_r: Address_Generator PORT MAP(
 		CLK25 => clk_vga,
 		enable => activeArea,
         vsync  => vsync,
