@@ -128,13 +128,19 @@ architecture Behavioral of StereoCam is
     CLK_25          : out    std_logic);
 	end component;
 	
-	COMPONENT vga_pll
-	PORT(
-		inclk0 : IN std_logic;          
-		c0 : OUT std_logic;
-		c1 : OUT std_logic
-		);
-	END COMPONENT;
+    component downsample
+     Port (
+        clk         : in  STD_LOGIC;
+        reset       : in  STD_LOGIC;
+        start       : in  STD_LOGIC;
+        addr_in     : out STD_LOGIC_VECTOR (16 downto 0);
+        data_in     : in  STD_LOGIC_VECTOR (7 downto 0);
+        we_out      : out STD_LOGIC;
+        addr_out    : out STD_LOGIC_VECTOR (16 downto 0);
+        data_out    : out STD_LOGIC_VECTOR (7 downto 0);
+        done        : out STD_LOGIC
+    );
+    end component;   
 
 	COMPONENT Address_Generator
 	PORT(
@@ -274,6 +280,7 @@ begin
 		dina      => wrdata_r(7 downto 4),
 		wea      => wren_r
 	);
+	
 	
 	Inst_ov7670_capture_l: ov7670_capture PORT MAP(
 		pclk  => ov7670_pclk_l,
