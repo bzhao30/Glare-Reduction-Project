@@ -10,28 +10,28 @@ entity Address_Generator is
             --rez_160x120  : IN std_logic;
             --rez_320x240  : IN std_logic;
             vsync        : in  STD_LOGIC;
-				address 		 : out STD_LOGIC_VECTOR (16 downto 0));	-- adresse généré
+				address 		 : out STD_LOGIC_VECTOR (16 downto 0));	-- adresse gï¿½nï¿½rï¿½
 end Address_Generator;
 
 architecture Behavioral of Address_Generator is
    signal val: STD_LOGIC_VECTOR(address'range):= (others => '0');		-- signal intermidiaire
 begin
-	address <= val;																		-- adresse généré
+	address <= val;																		-- adresse gï¿½nï¿½rï¿½
 
 	process(CLK25)
 		begin
          if rising_edge(CLK25) then
-            if (enable='1') then													-- si enable = 0 on arrete la génération d'adresses
+            if (enable='1') then													-- si enable = 0 on arrete la gï¿½nï¿½ration d'adresses
 --               if rez_160x120 = '1' then
---                  if (val < 160*120) then										-- si l'espace mémoire est balayé complétement				
+--                  if (val < 160*120) then										-- si l'espace mï¿½moire est balayï¿½ complï¿½tement				
 --                     val <= val + 1 ;
 --                  end if;
 --               elsif rez_320x240 = '1' then
-                  if (val < 320*240) then										-- si l'espace mémoire est balayé complétement				
+                  if (val < 160*120) then										-- si l'espace mï¿½moire est balayï¿½ complï¿½tement				
                      val <= val + 1 ;
                   end if;
 --               else
---                  if (val < 640*480) then										-- si l'espace mémoire est balayé complétement				
+--                  if (val < 640*480) then										-- si l'espace mï¿½moire est balayï¿½ complï¿½tement				
 --                     val <= val + 1 ;
 --                  end if;
                end if;

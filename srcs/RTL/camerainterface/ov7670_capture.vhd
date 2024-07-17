@@ -16,8 +16,6 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity ov7670_capture is
     Port ( pclk  : in   STD_LOGIC;
---           rez_160x120 : IN std_logic;
---           rez_320x240 : IN std_logic;
            vsync : in   STD_LOGIC;
            href  : in   STD_LOGIC;
            d     : in   STD_LOGIC_VECTOR (7 downto 0);
@@ -83,22 +81,14 @@ capture_process: process(pclk)
 --            if (rez_160x120 = '1' and href_last(6) = '1') or
 --               (rez_320x240 = '1' and href_last(2) = '1') or 
 --               (rez_160x120 = '0' and rez_320x240  = '0' and href_last(0) = '1') then
-            if (href_last(2) = '1') then
---               if rez_160x120 = '1' then
---                  if line = "10" then
---                     we_reg <= '1';
---                   end if;
---               elsif rez_320x240 = '1' then
-                  if line(1) = '1' then
-                     we_reg <= '1';
-                   end if;
---               else
---                   we_reg <= '1';
---               end if;
-               href_last <= (others => '0');
-            else
-               href_last <= href_last(href_last'high-1 downto 0) & latched_href;
-            end if;
+         if (href_last(6) = '1') then
+               if line = "10" then
+                  we_reg <= '1';
+               end if;
+            href_last <= (others => '0');
+         else
+            href_last <= href_last(href_last'high-1 downto 0) & latched_href;
+         end if;
          end if;
       end if;
       if falling_edge(pclk) then

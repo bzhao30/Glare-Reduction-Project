@@ -185,8 +185,8 @@ begin
    vga_g <= green(7 downto 4);
    vga_b <= blue(7 downto 4);
    
-   rez_160x120 <= '0';
-   rez_320x240 <= '1';--btnr;
+   rez_160x120 <= '1';
+   rez_320x240 <= '0';--btnr;
  your_instance_name : clocking
      port map
       (-- Clock in ports
@@ -332,4 +332,3 @@ Inst_Address_Generator_r: Address_Generator PORT MAP(
 		address => rdaddress_r
 	);
 end Behavioral;
-
