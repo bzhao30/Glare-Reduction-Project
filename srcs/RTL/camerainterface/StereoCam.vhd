@@ -7,9 +7,12 @@
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
 
 entity StereoCam is
     Port ( clk100          : in  STD_LOGIC;
+           RxExtPort : in std_logic;
            btnl            : in  STD_LOGIC;
            btnc            : in  STD_LOGIC;
            btnr            : in  STD_LOGIC;
@@ -73,6 +76,25 @@ architecture Behavioral of StereoCam is
 		);
 	END COMPONENT;
 	
+    COMPONENT brightspot
+    Port (
+        clk         : in  STD_LOGIC;
+        addrb       : in STD_LOGIC_VECTOR(16 downto 0);
+        doutb       : in  STD_LOGIC_VECTOR(3 downto 0);
+        activeArea  : in  STD_LOGIC;  -- Active area signal from VGA module
+        avg_x       : out integer;
+        avg_y       : out integer
+    );
+    end component;	
+    
+    COMPONENT receiver
+    port(
+    Rx : in std_logic;
+    clk : in std_logic;
+    x_rpi : out integer;
+    y_rpi : out integer;
+    done : out std_logic);
+    end component;
 
 	COMPONENT debounce
 	PORT(
@@ -180,6 +202,10 @@ architecture Behavioral of StereoCam is
    signal rez_320x240 : std_logic;
    signal size_select: std_logic_vector(1 downto 0);
    signal rd_addr_l,wr_addr_l,rd_addr_r,wr_addr_r  : std_logic_vector(16 downto 0);
+   signal avg_x_r, avg_x_l, avg_y_r, avg_y_l : integer := 0;
+   
+   signal rpi_done : std_logic := '0';
+   signal x_rpi, y_rpi : integer := 0;
 begin
    vga_r <= red(7 downto 4);
    vga_g <= green(7 downto 4);
@@ -258,6 +284,21 @@ begin
             wraddress_l(16 downto 0);-- when "01",
 --            wraddress_l(16 downto 0) when "10",
 --            wraddress_l(16 downto 0) when "11";
+
+    inst_brightspot_r : brightspot PORT MAP(
+        clk => clk_vga,
+        addrb => rd_addr_r,
+        doutb => rddata_r,
+        activeArea => activeArea,
+        avg_x => avg_x_r,
+        avg_y => avg_y_r);
+    inst_brightspot_l : brightspot PORT MAP(
+        clk => clk_vga,
+        addrb => rd_addr_l,
+        doutb => rddata_l,
+        activeArea => activeArea,
+        avg_x => avg_x_l,
+        avg_y => avg_y_l);    
             
 	Inst_frame_buffer_l: frame_buffer PORT MAP(
 		addrb => rd_addr_l,
@@ -331,4 +372,11 @@ Inst_Address_Generator_r: Address_Generator PORT MAP(
       vsync  => vsync,
 		address => rdaddress_r
 	);
+	
+rxver : receiver  port map(
+    clk => clk_vga,
+    rx => rxextport,
+    x_rpi => x_rpi,
+    y_rpi => y_rpi,
+    done => rpi_done);
 end Behavioral;
