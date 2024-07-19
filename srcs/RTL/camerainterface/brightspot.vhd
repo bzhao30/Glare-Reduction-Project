@@ -5,7 +5,7 @@ use IEEE.NUMERIC_STD.ALL;
 entity Brightspot is
     Port (
         clk         : in  STD_LOGIC;
-        addrb       : in STD_LOGIC_VECTOR(16 downto 0);
+        addrb       : in STD_LOGIC_VECTOR(14 downto 0); -- Updated to 15 bits
         doutb       : in  STD_LOGIC_VECTOR(3 downto 0);
         activeArea  : in  STD_LOGIC;  -- Active area signal from VGA module
         avg_x       : out integer;
@@ -17,9 +17,9 @@ architecture Behavioral of Brightspot is
     signal x_sum        : unsigned(15 downto 0) := (others => '0');
     signal y_sum        : unsigned(15 downto 0) := (others => '0');
     signal white_count  : unsigned(15 downto 0) := (others => '0');
-    signal current_addr : unsigned(16 downto 0);
+    signal current_addr : unsigned(14 downto 0); -- Updated to 15 bits
     signal x_coord      : unsigned(7 downto 0);
-    signal y_coord      : unsigned(7 downto 0);
+    signal y_coord      : unsigned(6 downto 0); -- Updated to 7 bits
 begin
 
     -- Coordinate calculation based on address
@@ -29,8 +29,8 @@ begin
             if activeArea = '1' then
                 current_addr <= unsigned(addrb);
 
-                x_coord <= current_addr(7 downto 0);    -- X-coordinate
-                y_coord <= current_addr(15 downto 8);   -- Y-coordinate
+                x_coord <= current_addr(7 downto 0);    -- X-coordinate (8 bits)
+                y_coord <= current_addr(14 downto 8);   -- Y-coordinate (7 bits)
 
                 if doutb = "1111" or doutb = "1110" then  -- Assuming "1111" represents a white pixel
                     x_sum <= x_sum + unsigned(x_coord);

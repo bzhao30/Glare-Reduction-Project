@@ -12,7 +12,7 @@ use IEEE.NUMERIC_STD.ALL;
 
 entity StereoCam is
     Port ( clk100          : in  STD_LOGIC;
-           RxExtPort : in std_logic;
+           RxExtPort        : in std_logic;
            btnl            : in  STD_LOGIC;
            btnc            : in  STD_LOGIC;
            btnr            : in  STD_LOGIC;
@@ -79,7 +79,7 @@ architecture Behavioral of StereoCam is
     COMPONENT brightspot
     Port (
         clk         : in  STD_LOGIC;
-        addrb       : in STD_LOGIC_VECTOR(16 downto 0);
+        addrb       : in STD_LOGIC_VECTOR(14 downto 0);
         doutb       : in  STD_LOGIC_VECTOR(3 downto 0);
         activeArea  : in  STD_LOGIC;  -- Active area signal from VGA module
         avg_x       : out integer;
@@ -108,11 +108,11 @@ architecture Behavioral of StereoCam is
   PORT (
       clka : IN STD_LOGIC;
       wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
-      addra : IN STD_LOGIC_VECTOR(16 DOWNTO 0);
+      addra : IN STD_LOGIC_VECTOR(14 DOWNTO 0);
       dina : IN STD_LOGIC_VECTOR(3 DOWNTO 0);
       clkb : IN STD_LOGIC;
       enb : IN STD_LOGIC;
-      addrb : IN STD_LOGIC_VECTOR(16 DOWNTO 0);
+      addrb : IN STD_LOGIC_VECTOR(14 DOWNTO 0);
       doutb : OUT STD_LOGIC_VECTOR(3 DOWNTO 0)
     );
 	END COMPONENT;
@@ -125,7 +125,7 @@ architecture Behavioral of StereoCam is
 		vsync : IN std_logic;
 		href : IN std_logic;
 		d : IN std_logic_vector(7 downto 0);          
-		addr : OUT std_logic_vector(16 downto 0);
+		addr : OUT std_logic_vector(14 downto 0);
 		dout : OUT std_logic_vector(11 downto 0);
 		we : OUT std_logic
 		);
@@ -149,20 +149,7 @@ architecture Behavioral of StereoCam is
     CLK_50          : out    std_logic;
     CLK_25          : out    std_logic);
 	end component;
-	
-    component downsample
-     Port (
-        clk         : in  STD_LOGIC;
-        reset       : in  STD_LOGIC;
-        start       : in  STD_LOGIC;
-        addr_in     : out STD_LOGIC_VECTOR (16 downto 0);
-        data_in     : in  STD_LOGIC_VECTOR (7 downto 0);
-        we_out      : out STD_LOGIC;
-        addr_out    : out STD_LOGIC_VECTOR (16 downto 0);
-        data_out    : out STD_LOGIC_VECTOR (7 downto 0);
-        done        : out STD_LOGIC
-    );
-    end component;   
+	 
 
 	COMPONENT Address_Generator
 	PORT(
@@ -171,7 +158,7 @@ architecture Behavioral of StereoCam is
 --      rez_320x240 : IN std_logic;
 		enable      : IN  std_logic;       
       vsync       : in  STD_LOGIC;
-		address     : OUT std_logic_vector(16 downto 0)
+		address     : OUT std_logic_vector(14 downto 0)
 		);
 	END COMPONENT;
 
@@ -185,14 +172,14 @@ architecture Behavioral of StereoCam is
    signal vSync      : std_logic;
    signal nSync      : std_logic;
    
-   signal wraddress_l  : std_logic_vector(16 downto 0);
+   signal wraddress_l  : std_logic_vector(14 downto 0);
    signal wrdata_l     : std_logic_vector(11 downto 0);
-   signal wraddress_r  : std_logic_vector(16 downto 0);
+   signal wraddress_r  : std_logic_vector(14 downto 0);
    signal wrdata_r     : std_logic_vector(11 downto 0);
    
-   signal rdaddress_l  : std_logic_vector(16 downto 0);
+   signal rdaddress_l  : std_logic_vector(14 downto 0);
    signal rddata_l     : std_logic_vector(3 downto 0);
-   signal rdaddress_r  : std_logic_vector(16 downto 0);
+   signal rdaddress_r  : std_logic_vector(14 downto 0);
    signal rddata_r     : std_logic_vector(3 downto 0);
    
    signal red,green,blue : std_logic_vector(7 downto 0);
@@ -201,7 +188,7 @@ architecture Behavioral of StereoCam is
    signal rez_160x120 : std_logic;
    signal rez_320x240 : std_logic;
    signal size_select: std_logic_vector(1 downto 0);
-   signal rd_addr_l,wr_addr_l,rd_addr_r,wr_addr_r  : std_logic_vector(16 downto 0);
+   signal rd_addr_l,wr_addr_l,rd_addr_r,wr_addr_r  : std_logic_vector(14 downto 0);
    signal avg_x_r, avg_x_l, avg_y_r, avg_y_l : integer := 0;
    
    signal rpi_done : std_logic := '0';
@@ -266,22 +253,22 @@ begin
 	
     --with size_select select 
     rd_addr_l <= --rdaddress_l(18 downto 2) when "00",
-        rdaddress_l(16 downto 0);-- when "01",
+        rdaddress_l(14 downto 0);-- when "01",
 --        rdaddress_l(16 downto 0) when "10",
 --        rdaddress_l(16 downto 0) when "11";
 --    with size_select select
     rd_addr_r <= --rdaddress_r(18 downto 2) when "00",
-        rdaddress_r(16 downto 0);-- when "01",
+        rdaddress_r(14 downto 0);-- when "01",
 --        rdaddress_r(16 downto 0) when "10",
 --        rdaddress_r(16 downto 0) when "11";
   -- with size_select select 
     wr_addr_r <= --wraddress_r(18 downto 2) when "00",
-            wraddress_r(16 downto 0);-- when "01",
+            wraddress_r(14 downto 0);-- when "01",
 --            wraddress_r(16 downto 0) when "10",
 --            wraddress_r(16 downto 0) when "11";
    --with size_select select 
     wr_addr_l <= --wraddress_l(18 downto 2) when "00",
-            wraddress_l(16 downto 0);-- when "01",
+            wraddress_l(14 downto 0);-- when "01",
 --            wraddress_l(16 downto 0) when "10",
 --            wraddress_l(16 downto 0) when "11";
 
