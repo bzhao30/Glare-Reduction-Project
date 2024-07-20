@@ -23,7 +23,7 @@ picam2.start()
 
 # frame counter
 frame_counter = 0
-print_interval = 4  # Print every 4 frames
+print_interval = 3  # Print every 3 frames
 
 def convert_and_send(value):
     # Ensure the value is within the 10-bit range
