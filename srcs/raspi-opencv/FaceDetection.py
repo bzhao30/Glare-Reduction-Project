@@ -5,7 +5,7 @@ import time
 import serial
 
 # UART configuration
-ser = serial.Serial('/dev/ttyS0', 19200)  # Adjust the serial port and baud rate as needed
+ser = serial.Serial('/dev/ttyUSB0', 19200)  
 
 cascade_path = '/home/brad/opencv/data/haarcascades/haarcascade_frontalface_default.xml'
 if not os.path.exists(cascade_path):
@@ -26,9 +26,9 @@ frame_counter = 0
 print_interval = 4  # Print every 4 frames
 
 def convert_and_send(value):
-    # Ensure the value is within the 10-bit range 
-    # Convert value to 9-bit binary string
-    binary_value = f'{value:8b}'
+    # Ensure the value is within the 10-bit range
+    # Convert value to 8-bit binary string
+    binary_value = f'{value:08b}'  # Changed from 8b to 08b to ensure zero-padding
     # Add '1' before and '0' after
     uart_frame = '1' + binary_value + '0'
     # Reverse the binary string to send LSB first
@@ -58,7 +58,7 @@ while True:
         frame_width = frame.shape[1]
         frame_height = frame.shape[0]
         scaled_x = int((center_x / frame_width) * 100)
-        scaled_y = int((center_y / frame_height) * 100)
+        scaled_y = int((1-(center_y / frame_height)) * 100)
 
         if frame_counter % print_interval == 0:
             print(f"{scaled_x:03d}.{scaled_y:03d}")
