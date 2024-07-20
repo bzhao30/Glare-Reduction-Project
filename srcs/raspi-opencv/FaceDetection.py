@@ -27,14 +27,12 @@ print_interval = 4  # Print every 4 frames
 
 def convert_and_send(value):
     # Ensure the value is within the 10-bit range 
-
     # Convert value to 9-bit binary string
-    binary_value = f'{value:010b}'
+    binary_value = f'{value:8b}'
     # Add '1' before and '0' after
     uart_frame = '1' + binary_value + '0'
     # Reverse the binary string to send LSB first
     reversed_frame = uart_frame[::-1]
-
     # Convert the reversed binary string to bytes
     byte_value = int(reversed_frame, 2).to_bytes(2, byteorder='big')
     # Send the byte over UART
@@ -55,16 +53,18 @@ while True:
         cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 255), 5)
         center_x = x + w // 2
         center_y = y + h // 2
-        formatted_x = f"{center_x:03d}"  
-        formatted_y = f"{center_y:03d}"  
+
+        # Scaling the coordinates to 0-100 range with 50 in the middle
+        frame_width = frame.shape[1]
+        frame_height = frame.shape[0]
+        scaled_x = int((center_x / frame_width) * 100)
+        scaled_y = int((center_y / frame_height) * 100)
 
         if frame_counter % print_interval == 0:
-            print(f"{formatted_x}.{formatted_y}")
+            print(f"{scaled_x:03d}.{scaled_y:03d}")
             # Convert to unsigned and send over UART
-            unsigned_x = int(formatted_x)
-            unsigned_y = int(formatted_y)
-            convert_and_send(unsigned_x)
-            convert_and_send(unsigned_y)
+            convert_and_send(scaled_x)
+            convert_and_send(scaled_y)
 
     frame_counter += 1
 
