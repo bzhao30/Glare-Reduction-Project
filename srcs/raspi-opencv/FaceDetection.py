@@ -5,7 +5,7 @@ import time
 import serial
 
 # UART configuration
-ser = serial.Serial('/dev/ttyS0', 9600)  # Adjust the serial port and baud rate as needed
+ser = serial.Serial('/dev/ttyS0', 19200)  # Adjust the serial port and baud rate as needed
 
 cascade_path = '/home/brad/opencv/data/haarcascades/haarcascade_frontalface_default.xml'
 if not os.path.exists(cascade_path):
