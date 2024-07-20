@@ -5,7 +5,7 @@ import time
 import serial
 
 # UART configuration
-ser = serial.Serial('/dev/ttyUSB0', 19200)  
+ser = serial.Serial('/dev/ttyUSB0', 19200) 
 
 cascade_path = '/home/brad/opencv/data/haarcascades/haarcascade_frontalface_default.xml'
 if not os.path.exists(cascade_path):
@@ -23,25 +23,21 @@ picam2.start()
 
 # frame counter
 frame_counter = 0
-print_interval = 3  # Print every 3 frames
+print_interval = 3
 
-def convert_and_send(value):
-    # Ensure the value is within the 10-bit range
-    # Convert value to 8-bit binary string
-    binary_value = f'{value:08b}'  # Changed from 8b to 08b to ensure zero-padding
-    # Add '1' before and '0' after
-    uart_frame = '1' + binary_value + '0'
-    # Reverse the binary string to send LSB first
-    reversed_frame = uart_frame[::-1]
-    # Convert the reversed binary string to bytes
-    byte_value = int(reversed_frame, 2).to_bytes(2, byteorder='big')
-    # Send the byte over UART
-    ser.write(byte_value)
+def convert_and_send(value_x, value_y):
+
+    byte_x = value_x.to_bytes(1, byteorder='big', signed=False)
+    byte_y = value_y.to_bytes(1, byteorder='big', signed=False)
+    
+    # Send each byte over UART
+    ser.write(byte_x)
+    ser.write(byte_y)
 
 while True:
     frame = picam2.capture_array()
 
-    scale_factor = 0.5  
+    scale_factor = 0.5
     frame = cv2.resize(frame, (0, 0), fx=scale_factor, fy=scale_factor)
     # grayscale conversion
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -62,9 +58,8 @@ while True:
 
         if frame_counter % print_interval == 0:
             print(f"{scaled_x:03d}.{scaled_y:03d}")
-            # Convert to unsigned and send over UART
-            convert_and_send(scaled_x)
-            convert_and_send(scaled_y)
+            # Convert to unsigned 8-bit and send over UART
+            convert_and_send(scaled_x, scaled_y)
 
     frame_counter += 1
 
