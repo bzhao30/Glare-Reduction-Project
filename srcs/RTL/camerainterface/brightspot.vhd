@@ -45,12 +45,12 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            if white_count /= 0 then
+            if white_count > "0000000000001111" then
                 avg_x <= to_integer(x_sum / white_count);
                 avg_y <= to_integer(y_sum / white_count);
             else
-                avg_x <= 0;
-                avg_y <= 0;
+                avg_x <= 80;
+                avg_y <= 60;
             end if;
         end if;
     end process;
