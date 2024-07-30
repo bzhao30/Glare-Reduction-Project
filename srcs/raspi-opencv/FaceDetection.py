@@ -5,7 +5,7 @@ import time
 import serial
 
 # UART configuration
-ser = serial.Serial('/dev/ttyUSB0', 19200) 
+ser = serial.Serial('/dev/tty1', 19200) 
 
 cascade_path = '/home/brad/opencv/data/haarcascades/haarcascade_frontalface_default.xml'
 if not os.path.exists(cascade_path):
@@ -26,7 +26,6 @@ frame_counter = 0
 print_interval = 3
 
 def convert_and_send(value_x, value_y):
-
     byte_x = value_x.to_bytes(1, byteorder='big', signed=False)
     byte_y = value_y.to_bytes(1, byteorder='big', signed=False)
     
@@ -36,15 +35,19 @@ def convert_and_send(value_x, value_y):
 
 while True:
     frame = picam2.capture_array()
+    
+    # Rotate the frame by 90 degrees  cclockwise
+    frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
     scale_factor = 0.5
     frame = cv2.resize(frame, (0, 0), fx=scale_factor, fy=scale_factor)
-    # grayscale conversion
+    
+    # Grayscale conversion
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
-    # create rectangle around face, find center coords
+    # Create rectangle around face, find center coords
     for (x, y, w, h) in faces:
         cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 255, 255), 5)
         center_x = x + w // 2
@@ -54,7 +57,7 @@ while True:
         frame_width = frame.shape[1]
         frame_height = frame.shape[0]
         scaled_x = int((center_x / frame_width) * 100)
-        scaled_y = int((1-(center_y / frame_height)) * 100)
+        scaled_y = int((1 - (center_y / frame_height)) * 100)
 
         if frame_counter % print_interval == 0:
             print(f"{scaled_x:03d}.{scaled_y:03d}")
