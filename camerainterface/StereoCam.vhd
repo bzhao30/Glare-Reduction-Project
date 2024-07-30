@@ -360,7 +360,7 @@ Inst_Address_Generator_r: Address_Generator PORT MAP(
 		address => rdaddress_r
 	);
 	
-rxver : receiver  port map(
+inst_rx : receiver  port map(
     clk => clk_vga,
     rx => rxextport,
     x_rpi => x_rpi,
