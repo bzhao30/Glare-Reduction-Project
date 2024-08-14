@@ -89,9 +89,11 @@ architecture Behavioral of StereoCam is
     COMPONENT brightspot
     Port (
         clk         : in  STD_LOGIC;
-        addrb       : in STD_LOGIC_VECTOR(14 downto 0);
+        vsync       : in  STD_LOGIC;  -- Vertical sync from the camera module
+        href        : in  STD_LOGIC;  -- Horizontal reference from the camera module
+        we_reg      : in  STD_LOGIC;  -- Write enable signal from the camera module
+        addrb       : in  STD_LOGIC_VECTOR(14 downto 0); 
         doutb       : in  STD_LOGIC_VECTOR(3 downto 0);
-        activeArea  : in  STD_LOGIC;  -- Active area signal from VGA module
         avg_x       : out integer;
         avg_y       : out integer
     );
@@ -332,19 +334,24 @@ begin
 --            wraddress_l(16 downto 0) when "11";
 
     inst_brightspot_r : brightspot PORT MAP(
-        clk => clk_vga,
-        addrb => rd_addr_r,
-        doutb => rddata_r,
-        activeArea => activeArea,
-        avg_x => avg_x_r,
-        avg_y => avg_y_r);
+        clk         => clk_vga,
+        vsync       => ov7670_vsync_r,
+        href        => ov7670_href_r,
+        we_reg      => wren_r(0),
+        addrb       => rd_addr_r,
+        doutb       => rddata_r,
+        avg_x       => avg_x_r,
+        avg_y       => avg_y_r);
+        
     inst_brightspot_l : brightspot PORT MAP(
-        clk => clk_vga,
-        addrb => rd_addr_l,
-        doutb => rddata_l,
-        activeArea => activeArea,
-        avg_x => avg_x_l,
-        avg_y => avg_y_l);    
+        clk         => clk_vga,
+        vsync       => ov7670_vsync_l,
+        href        => ov7670_href_l,
+        we_reg      => wren_l(0),
+        addrb       => rd_addr_l,
+        doutb       => rddata_l,
+        avg_x       => avg_x_l,
+        avg_y       => avg_y_l);  
     
     inst_lightblocker : lightblocker port map(
         clk => clk_vga,

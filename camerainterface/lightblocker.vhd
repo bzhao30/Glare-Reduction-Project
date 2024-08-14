@@ -101,7 +101,7 @@ if rising_edge(clk) then
 if locen = '1' then
     -- for temporary rpi testing purposes: 
     x_blocker <= 110-x_rpi;
-    y_blocker <= y_r;
+    y_blocker <= y_r*2;
     --x_blocker <= to_integer(resize(rpi_x + (fpga_x - rpi_x) * rpi_dist / (cardist + rpi_dist), 11, -6) );
     --y_blocker <= to_integer(resize((fpga_y) * rpi_dist / (cardist + rpi_dist), 11, -6) );
 end if;
