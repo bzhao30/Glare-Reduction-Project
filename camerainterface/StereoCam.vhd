@@ -1,10 +1,4 @@
-----------------------------------------------------------------------------------
--- Engineer: Aruna Jayasena <aruna.15@cse.mrt.ac.lk>
--- 
--- Module Name: StereoCam - Behavioral 
--- Description: Top level module For the disparity implementation using dual OV7670 camara modules on Basys 3
---
-----------------------------------------------------------------------------------
+
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
@@ -49,6 +43,22 @@ end StereoCam;
 
 architecture Behavioral of StereoCam is
 
+    -- dark spot output vga
+    component dark_vga
+        Port (
+        clk       : in  STD_LOGIC;
+        x_blocker : in integer;
+        y_blocker : in integer;
+        hsync     : out STD_LOGIC;
+        vsync     : out STD_LOGIC;
+        red       : out STD_LOGIC_VECTOR(3 downto 0);
+        green     : out STD_LOGIC_VECTOR(3 downto 0);
+        blue      : out STD_LOGIC_VECTOR(3 downto 0)
+    );
+    end component;
+    
+    
+    -- camera output vga
 	COMPONENT VGA
 	PORT(
 		CLK25 : IN std_logic;    
@@ -85,6 +95,20 @@ architecture Behavioral of StereoCam is
         avg_x       : out integer;
         avg_y       : out integer
     );
+    end component;
+    
+    component lightblocker
+    port(
+    clk : in std_logic;
+    en : in std_logic;
+    x_l : in integer;
+    x_r : in integer;
+    y_l : in integer;
+    y_r : in integer;
+    x_rpi : in integer;
+    y_rpi : in integer;
+    x_blocker : out integer;
+    y_blocker : out integer);
     end component;	
     
     COMPONENT receiver
@@ -93,7 +117,7 @@ architecture Behavioral of StereoCam is
     clk : in std_logic;
     x_rpi : out integer;
     y_rpi : out integer;
-    done : out std_logic);
+    rpi_done : out std_logic);
     end component;
 
 	COMPONENT debounce
@@ -189,17 +213,26 @@ architecture Behavioral of StereoCam is
    signal rez_320x240 : std_logic;
    signal size_select: std_logic_vector(1 downto 0);
    signal rd_addr_l,wr_addr_l,rd_addr_r,wr_addr_r  : std_logic_vector(14 downto 0);
-   signal avg_x_r, avg_x_l, avg_y_r, avg_y_l : integer := 0;
+   signal avg_x_r, avg_x_l, avg_y_r, avg_y_l, x_blocker, y_blocker : integer := 0;
    
    signal rpi_done : std_logic := '0';
    signal x_rpi, y_rpi : integer := 0;
+   
+   -- VGA TOGGLE SIGNALS
+   
+   signal vga_hsync_cam, vga_vsync_cam, vga_hsync_dark, vga_vsync_dark : std_logic := '0';
+   signal vga_r_cam, vga_r_dark, vga_g_cam, vga_g_dark, vga_b_cam, vga_b_dark : std_logic_vector(3 downto 0) := "0000";
+   
+   SIGNAL VGA_TOGGLE_DARK : STD_LOGIC := '1'; -- 0 IS CAM, 1 IS DARK
+   
 begin
-   vga_r <= red(7 downto 4);
-   vga_g <= green(7 downto 4);
-   vga_b <= blue(7 downto 4);
+   vga_r_cam <= red(7 downto 4);
+   vga_g_cam <= green(7 downto 4);
+   vga_b_cam <= blue(7 downto 4);
    
    rez_160x120 <= '1';
    rez_320x240 <= '0';--btnr;
+   
  your_instance_name : clocking
      port map
       (-- Clock in ports
@@ -208,19 +241,45 @@ begin
        CLK_50 => CLK_camera,
        CLK_25 => CLK_vga);
 
+   -- VGA TOGGLE
+   process(clk100) begin
+   if vga_toggle_dark = '1' then
+    vga_hsync <= vga_hsync_dark;
+    vsync <= vga_vsync_dark;
+    vga_r <= vga_r_dark;
+    vga_g <= vga_g_dark;
+    vga_b <= vga_b_dark;
+   else
+    vga_hsync <= vga_hsync_cam;
+    vsync <= vga_vsync_cam;
+    vga_r <= vga_r_cam;
+    vga_g <= vga_g_cam;
+    vga_b <= vga_b_cam;
+   end if;
+   end process;
    vga_vsync <= vsync;
-   
+    
 	Inst_VGA: VGA PORT MAP(
 		CLK25      => clk_vga,
       rez_160x120 => rez_160x120,
       rez_320x240 => rez_320x240,
 		clkout     => open,
-		Hsync      => vga_hsync,
-		Vsync      => vsync,
+		Hsync      => vga_hsync_CAM,
+		Vsync      => vga_vsync_cam,
 		Nblank     => nBlank,
 		Nsync      => nsync,
       activeArea => activeArea
 	);
+	
+	inst_darkvga : dark_vga port map(
+	   clk => clk_vga,
+	   x_blocker => x_blocker,
+	   y_blocker => y_blocker,
+	   hsync => vga_hsync_dark,
+	   vsync => vga_vsync_dark,
+	   red => vga_r_dark,
+	   green => vga_g_dark,
+	   blue => vga_b_dark);
 
 	Inst_debounce: debounce PORT MAP(
 		clk => clk_vga,
@@ -286,6 +345,19 @@ begin
         activeArea => activeArea,
         avg_x => avg_x_l,
         avg_y => avg_y_l);    
+    
+    inst_lightblocker : lightblocker port map(
+        clk => clk_vga,
+        en => rpi_done,
+        x_l => avg_x_r,
+        x_r => avg_x_l,
+        y_l => avg_y_r,
+        y_r => avg_y_l,
+        x_rpi => x_rpi,
+        y_rpi => y_rpi,
+        x_blocker => x_blocker,
+        y_blocker => y_blocker);
+        
             
 	Inst_frame_buffer_l: frame_buffer PORT MAP(
 		addrb => rd_addr_l,
@@ -365,5 +437,5 @@ inst_rx : receiver  port map(
     rx => rxextport,
     x_rpi => x_rpi,
     y_rpi => y_rpi,
-    done => rpi_done);
+    rpi_done => rpi_done);
 end Behavioral;

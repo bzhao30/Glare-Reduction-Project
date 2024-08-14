@@ -32,7 +32,7 @@ if rst = '1' then
 end if;
 if bauden = '1' then
   baudcount <= baudcount+1; 
-  if baudcount = 1301 then
+  if baudcount = 2603 then
     baudcount <= 0;
   end if;       
 end if;
@@ -42,7 +42,7 @@ end process baudcounter;
 
 process(baudcount) 
 begin
-if baudcount = 1301 then
+if baudcount = 2603 then
     baudTC <= '1';
 else
     baudTC <= '0';
@@ -69,7 +69,7 @@ end process bitcounter;
 
 process(baudcount, bitcount) 
 begin
-if bitcount = 8 and baudcount = 1301 then
+if bitcount = 8 and baudcount = 2603 then
   bitTC <= '1';
 else
   bitTC <= '0';
@@ -93,11 +93,13 @@ if rising_edge(clk) then
 end if;
 end process;
 
-process(conven) begin
+process(conven, clk) begin
+if rising_edge(clk) then
     if conven = '1' then
         x_rpi <= to_integer(unsigned(data_x));
         y_rpi <= to_integer(unsigned(data_y));
     end if;
+end if;
 end process;
        
     
@@ -133,7 +135,9 @@ case cs is
     bauden <= '1';
     xreg <= '1';
     if bittc = '1' then
-        ns <= listen2;
+        -- commented out for receiving Y problems
+        --ns <= listen2;
+        ns <= convert;
     end if;
     when listen2 =>
     rst <= '1';
