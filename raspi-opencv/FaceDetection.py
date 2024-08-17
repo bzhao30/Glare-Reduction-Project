@@ -5,7 +5,7 @@ import time
 import serial
 
 # UART configuration
-ser = serial.Serial('/dev/ttyUSB1', 19200) 
+ser = serial.Serial('/dev/ttyUSB1', 9600) 
 
 cascade_path = '/home/brad/opencv/data/haarcascades/haarcascade_frontalface_default.xml'
 if not os.path.exists(cascade_path):
@@ -30,12 +30,15 @@ def convert_and_send(value_x):
     
     # Send each byte over UART
     ser.write(byte_x)
+    time.sleep(0.01)
+    #ser.close()
 
 while True:
     frame = picam2.capture_array()
     
     # Rotate the frame by 90 degrees  cclockwise
     frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+    frame = cv2.rotate(frame, cv2.ROTATE_180)
 
     scale_factor = 0.5
     frame = cv2.resize(frame, (0, 0), fx=scale_factor, fy=scale_factor)
@@ -60,7 +63,7 @@ while True:
         if frame_counter % print_interval == 0:
             print(f"{scaled_x:03d}.{scaled_y:03d}")
             # Convert to unsigned 8-bit and send over UART
-            convert_and_send(80)
+            convert_and_send(scaled_x)
             #convert_and_send(scaled_y)
 
     frame_counter += 1
