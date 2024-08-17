@@ -24,7 +24,7 @@ architecture Behavioral of Brightspot is
     signal cs, ns       : statetype := init;
     signal rst, calcen  : std_logic := '0';
     signal xsig         : integer := 80;
-    signal ysig         : integer := 60;
+    signal ysig         : integer := -60;
 begin
     current_addr <= addrb;
 

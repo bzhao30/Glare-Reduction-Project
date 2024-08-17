@@ -35,8 +35,8 @@ architecture Behavioral of dark_vga is
     signal v_sync           : STD_LOGIC := '1';
 
     -- Circle parameters
-    signal CIRCLE_CENTER_X : integer := H_ACTIVE / 2;
-    signal CIRCLE_CENTER_Y : integer := V_ACTIVE / 2;
+    signal circle_center_x  : integer := H_ACTIVE / 2;
+    signal circle_center_y  : integer := V_ACTIVE / 2;
     constant OUTER_CIRCLE_RADIUS : integer := 60;
     constant INNER_CIRCLE_RADIUS : integer := 40;
 
@@ -47,12 +47,21 @@ architecture Behavioral of dark_vga is
     constant H_SHIFT        : integer := 145;
     constant V_SHIFT        : integer := 34;
 
+    -- Registered color signals
+    signal red_reg   : STD_LOGIC_VECTOR(3 downto 0) := (others => '0');
+    signal green_reg : STD_LOGIC_VECTOR(3 downto 0) := (others => '0');
+    signal blue_reg  : STD_LOGIC_VECTOR(3 downto 0) := (others => '0');
+
 begin
 
-    process(x_blocker, y_blocker)
+    -- Compute circle centers in the clocked process
+    process(clk)
     begin
-        circle_center_x <= H_ACTIVE / 2 + x_blocker*2;
-        circle_center_y <= V_ACTIVE / 2 + y_blocker;
+        if rising_edge(clk) then
+            circle_center_x <= H_ACTIVE / 2 + x_blocker * 2;
+            --circle_center_y <= V_ACTIVE / 2 + y_blocker;
+            circle_center_y <= V_ACTIVE / 2 + y_blocker;
+        end if;
     end process;
 
     -- Generate H_SYNC and V_SYNC signals
@@ -96,18 +105,17 @@ begin
             if h_counter >= H_SHIFT and h_counter < (H_ACTIVE + H_SHIFT) and 
                v_counter >= V_SHIFT and v_counter < (V_ACTIVE + V_SHIFT) then
                 -- Calculate the distance from the center of the circles
-                if ((h_counter - H_SHIFT - CIRCLE_CENTER_X) * (h_counter - H_SHIFT - CIRCLE_CENTER_X) +
-                    (v_counter - V_SHIFT - CIRCLE_CENTER_Y) * (v_counter - V_SHIFT - CIRCLE_CENTER_Y)) < (OUTER_CIRCLE_RADIUS * OUTER_CIRCLE_RADIUS) then
+                outer_circle_on <= '0';
+                inner_circle_on <= '0';
+                
+                if ((h_counter - H_SHIFT - circle_center_x) * (h_counter - H_SHIFT - circle_center_x) +
+                    (v_counter - V_SHIFT - circle_center_y) * (v_counter - V_SHIFT - circle_center_y)) < (OUTER_CIRCLE_RADIUS * OUTER_CIRCLE_RADIUS) then
                     outer_circle_on <= '1';
-                else
-                    outer_circle_on <= '0';
                 end if;
 
-                if ((h_counter - H_SHIFT - CIRCLE_CENTER_X) * (h_counter - H_SHIFT - CIRCLE_CENTER_X) +
-                    (v_counter - V_SHIFT - CIRCLE_CENTER_Y) * (v_counter - V_SHIFT - CIRCLE_CENTER_Y)) < (INNER_CIRCLE_RADIUS * INNER_CIRCLE_RADIUS) then
+                if ((h_counter - H_SHIFT - circle_center_x) * (h_counter - H_SHIFT - circle_center_x) +
+                    (v_counter - V_SHIFT - circle_center_y) * (v_counter - V_SHIFT - circle_center_y)) < (INNER_CIRCLE_RADIUS * INNER_CIRCLE_RADIUS) then
                     inner_circle_on <= '1';
-                else
-                    inner_circle_on <= '0';
                 end if;
             else
                 outer_circle_on <= '0';  -- Ensure outer_circle_on is reset outside active area
@@ -117,29 +125,36 @@ begin
     end process;
 
     -- Set pixel color based on the circle condition
-    process(h_counter, v_counter, outer_circle_on, inner_circle_on)
+    process(clk)
     begin
-        if h_counter >= H_SHIFT and h_counter < (H_ACTIVE + H_SHIFT) and 
-           v_counter >= V_SHIFT and v_counter < (V_ACTIVE + V_SHIFT) then
-            if inner_circle_on = '1' then
-                red   <= "1010"; -- Darker color for the inner circle
-                green <= "1010";
-                blue  <= "1010";
-            elsif outer_circle_on = '1' then
-                red   <= "1100"; -- Lighter color for the outer circle
-                green <= "1100";
-                blue  <= "1100";
+        if rising_edge(clk) then
+            if h_counter >= H_SHIFT and h_counter < (H_ACTIVE + H_SHIFT) and 
+               v_counter >= V_SHIFT and v_counter < (V_ACTIVE + V_SHIFT) then
+                if inner_circle_on = '1' then
+                    red_reg   <= "1010"; -- Darker color for the inner circle
+                    green_reg <= "1010";
+                    blue_reg  <= "1010";
+                elsif outer_circle_on = '1' then
+                    red_reg   <= "1100"; -- Lighter color for the outer circle
+                    green_reg <= "1100";
+                    blue_reg  <= "1100";
+                else
+                    red_reg   <= "1111"; -- White for the background
+                    green_reg <= "1111";
+                    blue_reg  <= "1111";
+                end if;
             else
-                red   <= "1111"; -- White for the background
-                green <= "1111";
-                blue  <= "1111";
+                -- Outside active area, set to black
+                red_reg   <= "0000";
+                green_reg <= "0000";
+                blue_reg  <= "0000";
             end if;
-        else
-            -- Outside active area, set to black
-            red   <= "0000";
-            green <= "0000";
-            blue  <= "0000";
         end if;
     end process;
+
+    -- Assign registered colors to output
+    red   <= red_reg;
+    green <= green_reg;
+    blue  <= blue_reg;
 
 end Behavioral;
