@@ -7,6 +7,7 @@ entity dark_vga is
         clk       : in  STD_LOGIC;
         x_blocker : in integer;
         y_blocker : in integer;
+        brightspot_en : in std_logic;
         hsync     : out STD_LOGIC;
         vsync     : out STD_LOGIC;
         red       : out STD_LOGIC_VECTOR(3 downto 0);
@@ -60,7 +61,7 @@ begin
         if rising_edge(clk) then
             circle_center_x <= H_ACTIVE / 2 + x_blocker * 2;
             --circle_center_y <= V_ACTIVE / 2 + y_blocker;
-            circle_center_y <= V_ACTIVE / 2 + y_blocker;
+            circle_center_y <= V_ACTIVE / 2 + y_blocker;            
         end if;
     end process;
 
@@ -108,15 +109,24 @@ begin
                 outer_circle_on <= '0';
                 inner_circle_on <= '0';
                 
-                if ((h_counter - H_SHIFT - circle_center_x) * (h_counter - H_SHIFT - circle_center_x) +
-                    (v_counter - V_SHIFT - circle_center_y) * (v_counter - V_SHIFT - circle_center_y)) < (OUTER_CIRCLE_RADIUS * OUTER_CIRCLE_RADIUS) then
-                    outer_circle_on <= '1';
+                
+                if brightspot_en = '1' then
+                    if ((h_counter - H_SHIFT - circle_center_x) * (h_counter - H_SHIFT - circle_center_x) +
+                        (v_counter - V_SHIFT - circle_center_y) * (v_counter - V_SHIFT - circle_center_y)) < (OUTER_CIRCLE_RADIUS * OUTER_CIRCLE_RADIUS) then
+                        outer_circle_on <= '1';
+                    end if;
+    
+                    if ((h_counter - H_SHIFT - circle_center_x) * (h_counter - H_SHIFT - circle_center_x) +
+                        (v_counter - V_SHIFT - circle_center_y) * (v_counter - V_SHIFT - circle_center_y)) < (INNER_CIRCLE_RADIUS * INNER_CIRCLE_RADIUS) then
+                        inner_circle_on <= '1';
+                    end if;
+                else
+                    outer_circle_on <= '0';
+                    inner_circle_on <= '0';
+                        
                 end if;
-
-                if ((h_counter - H_SHIFT - circle_center_x) * (h_counter - H_SHIFT - circle_center_x) +
-                    (v_counter - V_SHIFT - circle_center_y) * (v_counter - V_SHIFT - circle_center_y)) < (INNER_CIRCLE_RADIUS * INNER_CIRCLE_RADIUS) then
-                    inner_circle_on <= '1';
-                end if;
+                
+                
             else
                 outer_circle_on <= '0';  -- Ensure outer_circle_on is reset outside active area
                 inner_circle_on <= '0';  -- Ensure inner_circle_on is reset outside active area

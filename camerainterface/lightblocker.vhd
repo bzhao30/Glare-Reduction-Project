@@ -38,7 +38,6 @@ signal cardist : sfixed(11 downto -6) := "000000000001000000"; --1m
 signal disparity : sfixed(11 downto -6) := (others => '0');
 --signal baseline : sfixed(5 downto -6) := "000000010011"; -- 0.3m
 -- TEMPORARY CONSTANT TO BE ADJUSTED EMPIRICALLY FOR DISPARITY-DISTANCE CALCULATION
-signal constantvar : sfixed(11 downto -6) := "000000001111111111"; 
 signal rpi_x, rpi_y, fpga_x, fpga_y: sfixed(11 downto -6) := (others => '0');
 signal rpi_x_final, rpi_y_final, fpga_x_final, fpga_y_final : integer := 0;
 -- DISTANCE BETWEEN USER AND SCREEN IS APPROXIMATED AS 0.42 M
@@ -75,7 +74,7 @@ if disten = '1' then
             if disparity = "000000000000000000" then
                 cardist <= "011111111111111111";
             else
-                cardist <= resize(constantvar/disparity, 11, -6);
+                cardist <= resize(1/disparity, 11, -6);
             end if;
         when 3 => 
             distdone <= '1';
@@ -89,6 +88,7 @@ rpicoord : process(clk) begin
 if rising_edge(clk) then
     if coordsen = '1' then
         rpi_x <= resize(to_sfixed((x_rpi-110), 11, -6) * to_sfixed(1, 11, -6), 11, -6); -- WILL NEED TO ADJUST ACCORDINGLY LATER
+        
         rpi_y <= to_sfixed(-50, 11, -6);
     end if;    
 end if;
@@ -99,7 +99,7 @@ begin
     if rising_edge(clk) then
         if coordsen = '1' then
             -- ((x1 - 80) + (x2 - 80)) / 2 * distance
-            FPGA_x <= resize((to_sfixed(x_l - 80, 11, -6) + to_sfixed(x_r - 80, 11, -6)) * to_sfixed(0.5, 11, -6) * cardist, 11, -6);
+            FPGA_x <= resize((to_sfixed((x_l*2)/2, 11, -6)) - to_sfixed(132, 11, -6), 11, -6); -- atm testing why x axis shaky
             -- ((y1) + (y2)) / 2 * distance - 0.16
             FPGA_y <= resize((to_sfixed(y_l, 11, -6) + to_sfixed(y_r, 11, -6)) - to_sfixed(30, 11, -6), 11, -6);
 
@@ -112,7 +112,7 @@ begin
 if rising_edge(clk) then
 if locen = '1' then
     -- for temporary rpi testing purposes: 
-    x_blocker <= 110-x_rpi;
+    x_blocker <= fpga_x_final*3;
     --y_blocker <= 2*y_l;
     --x_blocker <= to_integer(resize(rpi_x + (fpga_x - rpi_x) * rpi_dist / (cardist + rpi_dist), 11, -6) );
     --y_blocker <= to_integer(resize((fpga_y) * rpi_dist / (cardist + rpi_dist), 11, -6) );

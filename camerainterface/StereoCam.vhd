@@ -49,6 +49,7 @@ architecture Behavioral of StereoCam is
         clk       : in  STD_LOGIC;
         x_blocker : in integer;
         y_blocker : in integer;
+        brightspot_en : in std_logic;
         hsync     : out STD_LOGIC;
         vsync     : out STD_LOGIC;
         red       : out STD_LOGIC_VECTOR(3 downto 0);
@@ -95,6 +96,7 @@ architecture Behavioral of StereoCam is
         addrb       : in  STD_LOGIC_VECTOR(14 downto 0); 
         doutb       : in  STD_LOGIC_VECTOR(3 downto 0);
         avg_x       : out integer;
+        brightspot_en : out std_logic;
         avg_y       : out integer
     );
     end component;
@@ -219,6 +221,7 @@ architecture Behavioral of StereoCam is
    
    signal rpi_done : std_logic := '0';
    signal x_rpi, y_rpi : integer := 0;
+   signal brightspot_en : std_logic := '1';
    
    -- VGA TOGGLE SIGNALS
    
@@ -280,6 +283,7 @@ begin
 	   hsync => vga_hsync_dark,
 	   vsync => vga_vsync_dark,
 	   red => vga_r_dark,
+	   brightspot_en => brightspot_en,
 	   green => vga_g_dark,
 	   blue => vga_b_dark);
 
@@ -339,6 +343,7 @@ begin
         href        => ov7670_href_r,
         we_reg      => wren_r(0),
         addrb       => rd_addr_r,
+        brightspot_en => brightspot_en,
         doutb       => rddata_r,
         avg_x       => avg_x_r,
         avg_y       => avg_y_r);
@@ -350,6 +355,7 @@ begin
         we_reg      => wren_l(0),
         addrb       => rd_addr_l,
         doutb       => rddata_l,
+        brightspot_en => open,
         avg_x       => avg_x_l,
         avg_y       => avg_y_l);  
     

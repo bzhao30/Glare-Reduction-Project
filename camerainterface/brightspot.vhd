@@ -10,6 +10,7 @@ entity Brightspot is
         we_reg      : in  STD_LOGIC;  -- Write enable signal from the camera module
         addrb       : in  STD_LOGIC_VECTOR(14 downto 0); 
         doutb       : in  STD_LOGIC_VECTOR(3 downto 0);
+        brightspot_en : out std_logic;
         avg_x       : out integer;
         avg_y       : out integer
     );
@@ -20,14 +21,15 @@ architecture Behavioral of Brightspot is
     signal y_sum        : unsigned(15 downto 0) := (others => '0');
     signal white_count  : unsigned(15 downto 0) := (others => '0');
     signal current_addr, prev_addr : std_logic_vector(14 downto 0) := (others => '0'); 
-    type statetype is (init, read, calc);
+    type statetype is (init, read, calc, assess);
     signal cs, ns       : statetype := init;
-    signal rst, calcen  : std_logic := '0';
+    signal rst, calcen, assess_en : std_logic := '0';
+    signal brightspot_en_sig : std_logic := '1';
     signal xsig         : integer := 80;
     signal ysig         : integer := -60;
 begin
     current_addr <= addrb;
-
+    brightspot_en <= brightspot_en_sig;
     -- Coordinate calculation based on address
     process(clk)
     variable x_coord : unsigned(7 downto 0);
@@ -57,14 +59,17 @@ begin
         end if;
     end process;
 
-    -- Calculate average position at the end of the frame
+     -- Calculate average position at the end of the frame
     process(clk)
     begin
         if rising_edge(clk) then
             if vsync = '0' and calcen = '1' then  -- Calculate when not in vertical sync and calcen is set
-                if white_count > "0000000000001000" then
+                if white_count > "0000000000001111" then
+                    brightspot_en <= '1';
                     xsig <= to_integer((x_sum + (white_count / 2)) / white_count);
                     ysig <= to_integer((y_sum + (white_count / 2)) / white_count);
+                else
+                    brightspot_en <= '0';
                 end if;
             end if;
         end if;
