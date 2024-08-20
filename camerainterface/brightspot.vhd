@@ -12,7 +12,8 @@ entity Brightspot is
         doutb       : in  STD_LOGIC_VECTOR(3 downto 0);
         brightspot_en : out std_logic;
         avg_x       : out integer;
-        avg_y       : out integer
+        avg_y       : out integer;
+        brightspot_done : out std_logic
     );
 end Brightspot;
 
@@ -20,60 +21,73 @@ architecture Behavioral of Brightspot is
     signal x_sum        : unsigned(15 downto 0) := (others => '0');
     signal y_sum        : unsigned(15 downto 0) := (others => '0');
     signal white_count  : unsigned(15 downto 0) := (others => '0');
-    signal current_addr, prev_addr : std_logic_vector(14 downto 0) := (others => '0'); 
-    type statetype is (init, read, calc, assess);
+    signal current_addr : std_logic_vector(14 downto 0) := (others => '0');
+    type statetype is (init, read, calc, assess, done);
     signal cs, ns       : statetype := init;
-    signal rst, calcen, assess_en : std_logic := '0';
+    signal rst, calcen  : std_logic := '0';
     signal brightspot_en_sig : std_logic := '1';
     signal xsig         : integer := 80;
     signal ysig         : integer := -60;
+    signal href_count   : integer := 0;
 begin
-    current_addr <= addrb;
     brightspot_en <= brightspot_en_sig;
+
     -- Coordinate calculation based on address
     process(clk)
-    variable x_coord : unsigned(7 downto 0);
+    variable x_coord : unsigned(14 downto 0);
     variable y_coord : unsigned(6 downto 0);
     begin
         if rising_edge(clk) then
             if vsync = '1' then
                 -- Reset all sums and counters at the start of a new frame
-                x_coord := (others => '0');
-                y_coord := (others => '0');
                 x_sum <= (others => '0');
                 y_sum <= (others => '0');
                 white_count <= (others => '0');
             elsif we_reg = '1' and href = '1' then
                 -- Capture pixel data when we_reg is asserted and href is active
-                x_coord := unsigned(current_addr(7 downto 0));    -- X-coordinate (8 bits)
-                y_coord := unsigned(current_addr(14 downto 8));   -- Y-coordinate (7 bits)
-                prev_addr <= current_addr;
-                if prev_addr /= current_addr then
-                    if doutb >= "1100" then  -- Broaden threshold for testing
-                        x_sum <= x_sum + ("00000000" & x_coord);
-                        y_sum <= y_sum + ("000000000" & y_coord);
-                        white_count <= white_count + 1;
-                    end if;
+                x_coord := unsigned(addrb) mod 160;    -- X-coordinate (8 bits)
+                y_coord := unsigned(addrb(14 downto 8));   -- Y-coordinate (7 bits)
+
+                if doutb >= "1100" then  -- Broaden threshold for testing
+                    x_sum <= x_sum + ("0" & x_coord);
+                    y_sum <= y_sum + ("000000000" & y_coord);
+                    white_count <= white_count + 1;
                 end if;
             end if;
         end if;
     end process;
 
-     -- Calculate average position at the end of the frame
+    -- Calculate average position at the end of the frame
     process(clk)
     begin
         if rising_edge(clk) then
             if vsync = '0' and calcen = '1' then  -- Calculate when not in vertical sync and calcen is set
-                if white_count > "0000000000001111" then
-                    brightspot_en <= '1';
+                if white_count > "0000000000001000" then
                     xsig <= to_integer((x_sum + (white_count / 2)) / white_count);
                     ysig <= to_integer((y_sum + (white_count / 2)) / white_count);
                 else
-                    brightspot_en <= '0';
                 end if;
             end if;
         end if;
     end process;
+    
+    
+    process(href)
+    begin
+    if falling_edge(href) then
+        if white_count > "0000000000001000" then
+            brightspot_en_sig <= '1';
+            href_count <= 0;
+        else
+            href_count <= href_count + 1;
+            if href_count = 2000 then
+                href_count <= 0;
+                brightspot_en_sig <= '1'; 
+            end if;
+        end if;
+    end if;
+    end process;     
+        
 
     -- Output average coordinates
     avg_x <= xsig;
@@ -91,6 +105,8 @@ begin
     begin
         rst <= '0';
         calcen <= '0';
+        brightspot_done <= '0';
+
         case cs is
             when init =>
                 rst <= '1';
@@ -103,7 +119,11 @@ begin
                 end if;
             when calc =>
                 calcen <= '1';
+                ns <= done;
+            when done => 
+                brightspot_done <= '1';
                 ns <= init;
+                
             when others =>
                 ns <= init;
         end case;

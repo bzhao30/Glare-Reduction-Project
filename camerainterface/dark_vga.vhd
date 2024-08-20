@@ -38,15 +38,15 @@ architecture Behavioral of dark_vga is
     -- Circle parameters
     signal circle_center_x  : integer := H_ACTIVE / 2;
     signal circle_center_y  : integer := V_ACTIVE / 2;
-    constant OUTER_CIRCLE_RADIUS : integer := 60;
-    constant INNER_CIRCLE_RADIUS : integer := 40;
+    constant OUTER_CIRCLE_RADIUS : integer := 70;
+    constant INNER_CIRCLE_RADIUS : integer := 50;
 
     signal outer_circle_on  : STD_LOGIC := '0';
     signal inner_circle_on  : STD_LOGIC := '0';
 
     -- Horizontal and vertical shift amounts
-    constant H_SHIFT        : integer := 145;
-    constant V_SHIFT        : integer := 34;
+    constant H_SHIFT        : integer := 145;  -- Adjust as needed
+    constant V_SHIFT        : integer := 20;   -- Adjust as needed
 
     -- Registered color signals
     signal red_reg   : STD_LOGIC_VECTOR(3 downto 0) := (others => '0');
@@ -59,9 +59,8 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            circle_center_x <= H_ACTIVE / 2 + x_blocker * 2;
-            --circle_center_y <= V_ACTIVE / 2 + y_blocker;
-            circle_center_y <= V_ACTIVE / 2 + y_blocker;            
+            circle_center_x <= H_ACTIVE / 2 - x_blocker;
+            circle_center_y <= V_ACTIVE / 2 - y_blocker;            
         end if;
     end process;
 
@@ -109,24 +108,17 @@ begin
                 outer_circle_on <= '0';
                 inner_circle_on <= '0';
                 
-                
                 if brightspot_en = '1' then
                     if ((h_counter - H_SHIFT - circle_center_x) * (h_counter - H_SHIFT - circle_center_x) +
                         (v_counter - V_SHIFT - circle_center_y) * (v_counter - V_SHIFT - circle_center_y)) < (OUTER_CIRCLE_RADIUS * OUTER_CIRCLE_RADIUS) then
                         outer_circle_on <= '1';
                     end if;
-    
+
                     if ((h_counter - H_SHIFT - circle_center_x) * (h_counter - H_SHIFT - circle_center_x) +
                         (v_counter - V_SHIFT - circle_center_y) * (v_counter - V_SHIFT - circle_center_y)) < (INNER_CIRCLE_RADIUS * INNER_CIRCLE_RADIUS) then
                         inner_circle_on <= '1';
                     end if;
-                else
-                    outer_circle_on <= '0';
-                    inner_circle_on <= '0';
-                        
                 end if;
-                
-                
             else
                 outer_circle_on <= '0';  -- Ensure outer_circle_on is reset outside active area
                 inner_circle_on <= '0';  -- Ensure inner_circle_on is reset outside active area
@@ -134,20 +126,20 @@ begin
         end if;
     end process;
 
-    -- Set pixel color based on the circle condition
+    -- Set pixel color based on the circle condition and active area
     process(clk)
     begin
         if rising_edge(clk) then
             if h_counter >= H_SHIFT and h_counter < (H_ACTIVE + H_SHIFT) and 
                v_counter >= V_SHIFT and v_counter < (V_ACTIVE + V_SHIFT) then
                 if inner_circle_on = '1' then
-                    red_reg   <= "1010"; -- Darker color for the inner circle
-                    green_reg <= "1010";
-                    blue_reg  <= "1010";
+                    red_reg   <= "0000"; -- Darker color for the inner circle
+                    green_reg <= "0000";
+                    blue_reg  <= "0000";
                 elsif outer_circle_on = '1' then
-                    red_reg   <= "1100"; -- Lighter color for the outer circle
-                    green_reg <= "1100";
-                    blue_reg  <= "1100";
+                    red_reg   <= "1000"; -- Lighter color for the outer circle
+                    green_reg <= "1000";
+                    blue_reg  <= "1000";
                 else
                     red_reg   <= "1111"; -- White for the background
                     green_reg <= "1111";

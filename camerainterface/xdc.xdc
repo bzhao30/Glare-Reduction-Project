@@ -47,21 +47,35 @@ set_property -dict { PACKAGE_PIN E19   IOSTANDARD LVCMOS33 } [get_ports config_f
 #set_property -dict { PACKAGE_PIN P1    IOSTANDARD LVCMOS33 } [get_ports {led[14]}]
 
 
-##7 Segment Display
-#set_property -dict { PACKAGE_PIN W7   IOSTANDARD LVCMOS33 } [get_ports {seg[0]}]
-#set_property -dict { PACKAGE_PIN W6   IOSTANDARD LVCMOS33 } [get_ports {seg[1]}]
-#set_property -dict { PACKAGE_PIN U8   IOSTANDARD LVCMOS33 } [get_ports {seg[2]}]
-#set_property -dict { PACKAGE_PIN V8   IOSTANDARD LVCMOS33 } [get_ports {seg[3]}]
-#set_property -dict { PACKAGE_PIN U5   IOSTANDARD LVCMOS33 } [get_ports {seg[4]}]
-#set_property -dict { PACKAGE_PIN V5   IOSTANDARD LVCMOS33 } [get_ports {seg[5]}]
-#set_property -dict { PACKAGE_PIN U7   IOSTANDARD LVCMOS33 } [get_ports {seg[6]}]
+##====================================================================	
+## 7 segment display
+##====================================================================
+set_property PACKAGE_PIN W7 [get_ports {seg_ext_port[0]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {seg_ext_port[0]}]
+set_property PACKAGE_PIN W6 [get_ports {seg_ext_port[1]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {seg_ext_port[1]}]
+set_property PACKAGE_PIN U8 [get_ports {seg_ext_port[2]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {seg_ext_port[2]}]
+set_property PACKAGE_PIN V8 [get_ports {seg_ext_port[3]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {seg_ext_port[3]}]
+set_property PACKAGE_PIN U5 [get_ports {seg_ext_port[4]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {seg_ext_port[4]}]
+set_property PACKAGE_PIN V5 [get_ports {seg_ext_port[5]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {seg_ext_port[5]}]
+set_property PACKAGE_PIN U7 [get_ports {seg_ext_port[6]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {seg_ext_port[6]}]
 
-#set_property -dict { PACKAGE_PIN V7   IOSTANDARD LVCMOS33 } [get_ports dp]
+set_property PACKAGE_PIN V7 [get_ports dp_ext_port]							
+	set_property IOSTANDARD LVCMOS33 [get_ports dp_ext_port]
 
-#set_property -dict { PACKAGE_PIN U2   IOSTANDARD LVCMOS33 } [get_ports {an[0]}]
-#set_property -dict { PACKAGE_PIN U4   IOSTANDARD LVCMOS33 } [get_ports {an[1]}]
-#set_property -dict { PACKAGE_PIN V4   IOSTANDARD LVCMOS33 } [get_ports {an[2]}]
-#set_property -dict { PACKAGE_PIN W4   IOSTANDARD LVCMOS33 } [get_ports {an[3]}]
+set_property PACKAGE_PIN U2 [get_ports {an_ext_port[0]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {an_ext_port[0]}]
+set_property PACKAGE_PIN U4 [get_ports {an_ext_port[1]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {an_ext_port[1]}]
+set_property PACKAGE_PIN V4 [get_ports {an_ext_port[2]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {an_ext_port[2]}]
+set_property PACKAGE_PIN W4 [get_ports {an_ext_port[3]}]					
+	set_property IOSTANDARD LVCMOS33 [get_ports {an_ext_port[3]}]
 
 
 ##Buttons
@@ -197,5 +211,7 @@ set_property CFGBVS VCCO [current_design]
 set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
 set_property BITSTREAM.CONFIG.CONFIGRATE 33 [current_design]
 set_property CONFIG_MODE SPIx4 [current_design]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {ov7670_href_r_IBUF}]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {ov7670_href_l_IBUF}]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {ov7670_pclk_l_IBUF}]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets {ov7670_pclk_r_IBUF}]

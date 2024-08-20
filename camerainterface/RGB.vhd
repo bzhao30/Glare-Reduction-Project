@@ -19,7 +19,7 @@ architecture Behavioral of RGB is
 
 signal Gray : std_logic_vector(7 downto 0);
 begin
-        Gray  <= (Din_r(3 downto 0) & Din_r(3 downto 0));
+        Gray  <= (Din_l(3 downto 0) & Din_l(3 downto 0));
 		R <= Gray when Nblank='1' else "00000000";
 		G <= Gray  when Nblank='1' else "00000000";
 		B <= Gray  when Nblank='1' else "00000000";

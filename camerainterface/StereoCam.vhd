@@ -19,6 +19,10 @@ entity StereoCam is
            vga_g     : out  STD_LOGIC_vector(3 downto 0);
            vga_b     : out  STD_LOGIC_vector(3 downto 0);
            
+           seg_ext_port		    : out std_logic_vector(0 to 6);
+           dp_ext_port			: out std_logic;
+           an_ext_port			: out std_logic_vector(3 downto 0);
+           
            ov7670_pclk_l  : in  STD_LOGIC;
            ov7670_xclk_l  : out STD_LOGIC;
            ov7670_vsync_l : in  STD_LOGIC;
@@ -97,6 +101,7 @@ architecture Behavioral of StereoCam is
         doutb       : in  STD_LOGIC_VECTOR(3 downto 0);
         avg_x       : out integer;
         brightspot_en : out std_logic;
+        brightspot_done : out std_logic;
         avg_y       : out integer
     );
     end component;
@@ -111,6 +116,7 @@ architecture Behavioral of StereoCam is
     y_r : in integer;
     x_rpi : in integer;
     y_rpi : in integer;
+    cardisthex : out std_logic_vector(15 downto 0);
     x_blocker : out integer;
     y_blocker : out integer);
     end component;	
@@ -189,6 +195,18 @@ architecture Behavioral of StereoCam is
 		address     : OUT std_logic_vector(14 downto 0)
 		);
 	END COMPONENT;
+	
+    component mux7seg is
+        Port ( clk_port 	: in  std_logic;						--should get the 1 MHz system clk
+             y3_port 		: in  std_logic_vector(3 downto 0);		--left most digit
+             y2_port 		: in  std_logic_vector(3 downto 0);		--center left digit
+             y1_port 		: in  std_logic_vector(3 downto 0);		--center right digit
+             y0_port 		: in  std_logic_vector(3 downto 0);		--right most digit
+             dp_set_port 	: in  std_logic_vector(3 downto 0);     --decimal points
+             seg_port 	: out  std_logic_vector(0 to 6);		--segments (a...g)
+             dp_port 		: out  std_logic;						--decimal point
+             an_port 		: out  std_logic_vector (3 downto 0) );	--anodes
+    end component;
 
 
 
@@ -212,6 +230,7 @@ architecture Behavioral of StereoCam is
    
    signal red,green,blue : std_logic_vector(7 downto 0);
    signal activeArea : std_logic;
+   signal cardisthex : std_logic_vector(15 downto 0) := (others => '0');
    
    signal rez_160x120 : std_logic;
    signal rez_320x240 : std_logic;
@@ -219,9 +238,9 @@ architecture Behavioral of StereoCam is
    signal rd_addr_l,wr_addr_l,rd_addr_r,wr_addr_r  : std_logic_vector(14 downto 0);
    signal avg_x_r, avg_x_l, avg_y_r, avg_y_l, x_blocker, y_blocker : integer := 0;
    
-   signal rpi_done : std_logic := '0';
+   signal rpi_done, brightspot_done : std_logic := '0';
    signal x_rpi, y_rpi : integer := 0;
-   signal brightspot_en : std_logic := '1';
+   signal brightspot_en1, brightspot_en2, brightspot_en : std_logic := '1';
    
    -- VGA TOGGLE SIGNALS
    
@@ -275,6 +294,7 @@ begin
 		Nsync      => nsync,
       activeArea => activeArea
 	);
+	brightspot_en <= brightspot_en1 or brightspot_en2;
 	
 	inst_darkvga : dark_vga port map(
 	   clk => clk_vga,
@@ -343,7 +363,8 @@ begin
         href        => ov7670_href_r,
         we_reg      => wren_r(0),
         addrb       => rd_addr_r,
-        brightspot_en => brightspot_en,
+        brightspot_en => brightspot_en1,
+        brightspot_done => brightspot_done,
         doutb       => rddata_r,
         avg_x       => avg_x_r,
         avg_y       => avg_y_r);
@@ -355,19 +376,21 @@ begin
         we_reg      => wren_l(0),
         addrb       => rd_addr_l,
         doutb       => rddata_l,
-        brightspot_en => open,
+        brightspot_en => brightspot_en2,
+        brightspot_done => open,
         avg_x       => avg_x_l,
         avg_y       => avg_y_l);  
     
     inst_lightblocker : lightblocker port map(
         clk => clk_vga,
-        en => rpi_done,
+        en => brightspot_done,
         x_l => avg_x_r,
         x_r => avg_x_l,
         y_l => avg_y_r,
         y_r => avg_y_l,
         x_rpi => x_rpi,
         y_rpi => y_rpi,
+        cardisthex => cardisthex,
         x_blocker => x_blocker,
         y_blocker => y_blocker);
         
@@ -451,4 +474,17 @@ inst_rx : receiver  port map(
     x_rpi => x_rpi,
     y_rpi => y_rpi,
     rpi_done => rpi_done);
+    
+seven_seg: mux7seg port map(
+        clk_port	=> clk_vga,		
+        y3_port		=> cardisthex(15 downto 12),		--left most digit
+        y2_port 	=> cardisthex(11 downto 8),		--center left digit
+        y1_port 	=> cardisthex(7 downto 4),		--center right digit (don't use this one)
+        y0_port 	=> cardisthex(3 downto 0),		--right most digit
+        dp_set_port => "1011",	--you get this one for free too
+        seg_port 	=> seg_ext_port,
+        dp_port 	=> dp_ext_port,
+        an_port 	=> an_ext_port);
+    
+
 end Behavioral;

@@ -14,6 +14,7 @@ port(
     y_r : in integer;
     x_rpi : in integer;
     y_rpi : in integer;
+    cardisthex   : out std_logic_vector(15 downto 0);
     x_blocker : out integer;
     y_blocker : out integer);
     
@@ -33,15 +34,14 @@ type statetype is (idle, finddist, findcoords, findlocation);
 signal cs, ns : statetype := idle;
 signal distdone, locdone, rst : std_logic := '0';
 signal coordsen, disten, locen : std_logic := '0';
-signal facedist : sfixed(11 downto -6) := "000000000000101101"; --0.7m
-signal cardist : sfixed(11 downto -6) := "000000000001000000"; --1m
-signal disparity : sfixed(11 downto -6) := (others => '0');
---signal baseline : sfixed(5 downto -6) := "000000010011"; -- 0.3m
+signal facedist : sfixed(11 downto -4) := "0000000000001011"; --0.7m
+signal cardist : sfixed(11 downto -4) := "0000000000010000"; --1m
+--signal baseline : sfixed(5 downto -4) := "000000010011"; -- 0.3m
 -- TEMPORARY CONSTANT TO BE ADJUSTED EMPIRICALLY FOR DISPARITY-DISTANCE CALCULATION
-signal rpi_x, rpi_y, fpga_x, fpga_y: sfixed(11 downto -6) := (others => '0');
+signal rpi_x, rpi_y, fpga_x, fpga_y: sfixed(11 downto -4) := (others => '0');
 signal rpi_x_final, rpi_y_final, fpga_x_final, fpga_y_final : integer := 0;
 -- DISTANCE BETWEEN USER AND SCREEN IS APPROXIMATED AS 0.42 M
-signal rpi_dist : sfixed(11 downto -6) := to_sfixed(0.42, 11, -6);
+signal rpi_dist : sfixed(11 downto -4) := to_sfixed(0.42, 11, -4);
 
 
 begin
@@ -55,43 +55,28 @@ uuY: lookuptable port map(
     
 
 disparite : process(clk)
-variable pipeline_count : integer := 0;
+variable disparity : sfixed(11 downto -4) := (others => '0');
 begin
 if rising_edge(clk) then
-if rst = '1' then
-    pipeline_count := 0;
-end if;
-if disten = '1' then
-    pipeline_count := pipeline_count + 1;
-    case pipeline_count is
-        when 1 => 
-            if x_l > x_r then
-                disparity <= to_sfixed(x_l-x_r, 11, -6);
-            else 
-                disparity <= to_sfixed(x_r-x_l, 11, -6);
-            end if;    
-        when 2 => 
-            if disparity = "000000000000000000" then
-                cardist <= "011111111111111111";
-            else
-                cardist <= resize(1/disparity, 11, -6);
-            end if;
-        when 3 => 
-            distdone <= '1';
-        when others =>
-    end case;    
-end if;    
-end if;
-end process;
-
-rpicoord : process(clk) begin
-if rising_edge(clk) then
-    if coordsen = '1' then
-        rpi_x <= resize(to_sfixed((x_rpi-110), 11, -6) * to_sfixed(1, 11, -6), 11, -6); -- WILL NEED TO ADJUST ACCORDINGLY LATER
-        
-        rpi_y <= to_sfixed(-50, 11, -6);
+    if disten = '1' then
+        if x_l = x_r then
+            cardist <= "0111111111111111";
+        elsif x_l > x_r then
+            disparity := to_sfixed(x_l-x_r, 11, -4);
+            cardist <= resize(50/disparity, 11, -4);
+        else
+            disparity := to_sfixed(x_r-x_l, 11, -4);
+            cardist <= resize(6000/disparity, 11, -4);
+        end if;      
     end if;    
 end if;
+end process;
+cardisthex <= std_logic_vector(to_signed(cardist, cardisthex'length));
+
+rpicoord : process(x_rpi) begin
+    rpi_x <= resize(to_sfixed((x_rpi-110), 11, -4) * to_sfixed(1, 11, -4), 11, -4); -- WILL NEED TO ADJUST ACCORDINGLY LATER
+    
+    rpi_y <= to_sfixed(-50, 11, -4);
 end process;
 
 fpgacoord : process(clk)
@@ -99,9 +84,9 @@ begin
     if rising_edge(clk) then
         if coordsen = '1' then
             -- ((x1 - 80) + (x2 - 80)) / 2 * distance
-            FPGA_x <= resize((to_sfixed((x_l*2)/2, 11, -6)) - to_sfixed(132, 11, -6), 11, -6); -- atm testing why x axis shaky
+            FPGA_x <= resize((to_sfixed((x_l + x_r)/2, 11, -4)) - to_sfixed(0, 11, -4), 11, -4); -- atm testing why x axis shaky
             -- ((y1) + (y2)) / 2 * distance - 0.16
-            FPGA_y <= resize((to_sfixed(y_l, 11, -6) + to_sfixed(y_r, 11, -6)) - to_sfixed(30, 11, -6), 11, -6);
+            FPGA_y <= resize((to_sfixed(y_l, 11, -4) + to_sfixed(y_r, 11, -4)) - to_sfixed(0, 11, -4), 11, -4);
 
         end if;
     end if;
@@ -112,11 +97,11 @@ begin
 if rising_edge(clk) then
 if locen = '1' then
     -- for temporary rpi testing purposes: 
-    x_blocker <= fpga_x_final*3;
+    x_blocker <= (FPGA_X_final);
     --y_blocker <= 2*y_l;
-    --x_blocker <= to_integer(resize(rpi_x + (fpga_x - rpi_x) * rpi_dist / (cardist + rpi_dist), 11, -6) );
-    --y_blocker <= to_integer(resize((fpga_y) * rpi_dist / (cardist + rpi_dist), 11, -6) );
-    y_blocker <= fpga_y_final*5;
+    --x_blocker <= to_integer(resize(rpi_x + (fpga_x - rpi_x) * rpi_dist / (cardist + rpi_dist), 11, -4) );
+    --y_blocker <= to_integer(resize((fpga_y) * rpi_dist / (cardist + rpi_dist), 11, -4) );
+    y_blocker <= fpga_y_final;
 end if;
 end if;
 end process;
@@ -142,9 +127,7 @@ case cs is
     end if;
     when finddist => 
     disten <= '1';
-    if distdone = '1' then
-        ns <= findcoords;
-    end if;
+    ns <= findcoords;
     when findcoords =>
     coordsen <= '1';
     ns <= findlocation;
