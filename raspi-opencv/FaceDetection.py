@@ -36,7 +36,7 @@ def convert_and_send(value_x):
 while True:
     frame = picam2.capture_array()
     
-    # Rotate the frame by 90 degrees  cclockwise
+    # Rotate the frame by 90 degrees cclockwise
     frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
     frame = cv2.rotate(frame, cv2.ROTATE_180)
 
@@ -45,6 +45,9 @@ while True:
     
     # Grayscale conversion
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # Apply Histogram Equalization
+    gray = cv2.equalizeHist(gray)
 
     faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
 
