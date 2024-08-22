@@ -1,10 +1,10 @@
-
+-- Top Level Shell
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;
 
 
-entity StereoCam is
+entity Shell is
     Port ( clk100          : in  STD_LOGIC;
            RxExtPort        : in std_logic;
            btnl            : in  STD_LOGIC;
@@ -43,9 +43,9 @@ entity StereoCam is
            ov7670_pwdn_r  : out STD_LOGIC;
            ov7670_reset_r : out STD_LOGIC
            );
-end StereoCam;
+end Shell;
 
-architecture Behavioral of StereoCam is
+architecture Behavioral of Shell is
 
     -- dark spot output vga
     component dark_vga

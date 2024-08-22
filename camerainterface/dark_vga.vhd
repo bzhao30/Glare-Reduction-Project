@@ -46,7 +46,7 @@ architecture Behavioral of dark_vga is
 
     -- Horizontal and vertical shift amounts
     constant H_SHIFT        : integer := 145;  -- Adjust as needed
-    constant V_SHIFT        : integer := 20;   -- Adjust as needed
+    constant V_SHIFT        : integer := 35;   -- Adjust as needed
 
     -- Registered color signals
     signal red_reg   : STD_LOGIC_VECTOR(3 downto 0) := (others => '0');
@@ -59,8 +59,8 @@ begin
     process(clk)
     begin
         if rising_edge(clk) then
-            circle_center_x <= H_ACTIVE / 2 - x_blocker;
-            circle_center_y <= V_ACTIVE / 2 - y_blocker;            
+            circle_center_x <= H_ACTIVE / 2 - x_blocker + 50;
+            circle_center_y <= V_ACTIVE / 2 - y_blocker + 120;            
         end if;
     end process;
 

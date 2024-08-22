@@ -1,15 +1,3 @@
-----------------------------------------------------------------------------------
--- Engineer: Aruna Jayasena <aruna.15@cse.mrt.ac.lk> 
--- 
--- Description: Captures the pixels coming from the OV7670 camera and 
---              Stores them in block RAM
---
--- The length of href last controls how often pixels are captive - (2 downto 0) stores
--- one pixel every 4 cycles.
---
--- "line" is used to control how often data is captured. In this case every forth 
--- line
-----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use IEEE.NUMERIC_STD.ALL;

@@ -84,9 +84,9 @@ begin
     if rising_edge(clk) then
         if coordsen = '1' then
             -- ((x1 - 80) + (x2 - 80)) / 2 * distance
-            FPGA_x <= resize((to_sfixed((x_l + x_r)/2, 11, -4)) - to_sfixed(0, 11, -4), 11, -4); -- atm testing why x axis shaky
+            FPGA_x <= resize((to_sfixed((x_l + x_r)/2, 11, -4)) - to_sfixed(74, 11, -4), 11, -4); -- atm testing why x axis shaky
             -- ((y1) + (y2)) / 2 * distance - 0.16
-            FPGA_y <= resize((to_sfixed(y_l, 11, -4) + to_sfixed(y_r, 11, -4)) - to_sfixed(0, 11, -4), 11, -4);
+            FPGA_y <= resize((to_sfixed((y_l + y_r)/2, 11, -4)) - to_sfixed(35, 11, -4), 11, -4);
 
         end if;
     end if;
@@ -97,11 +97,11 @@ begin
 if rising_edge(clk) then
 if locen = '1' then
     -- for temporary rpi testing purposes: 
-    x_blocker <= (FPGA_X_final);
+    x_blocker <= (110-x_rpi)*3 + (FPGA_X_final)*5;
     --y_blocker <= 2*y_l;
     --x_blocker <= to_integer(resize(rpi_x + (fpga_x - rpi_x) * rpi_dist / (cardist + rpi_dist), 11, -4) );
     --y_blocker <= to_integer(resize((fpga_y) * rpi_dist / (cardist + rpi_dist), 11, -4) );
-    y_blocker <= fpga_y_final;
+    y_blocker <= fpga_y_final*5;
 end if;
 end if;
 end process;
